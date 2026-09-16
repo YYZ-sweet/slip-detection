@@ -19,7 +19,6 @@ data:
     - 90.0
     fs: 180.0
     tau: 1.5
-    band_norm: log_zscore
 model:
   type: GRU
   input_size: 54

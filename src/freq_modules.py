@@ -70,6 +70,11 @@ class LearnableBandEnergy(nn.Module):
         self.tau = tau
         init = torch.full((n_bands - 1,), 0.0)
         self.beta = nn.Parameter(init)
+        # 关键：原始频带能量是 |rFFT|^2，量级可达 1e5~1e6，
+        # 而时域特征 Z-score 后 std=1。直接拼接会让频带特征主导整个网络、
+        # 时域信息被淹没（实测加频带后 FNR 从 0.059 劣化到 0.154）。
+        # 这里用 log1p 压缩动态范围 + LayerNorm 标准化到 std≈1。
+        self.norm = nn.LayerNorm(n_bands * n_ch)
 
     def band_edges(self):
         w = torch.softmax(self.beta, dim=0)
@@ -93,6 +98,7 @@ class LearnableBandEnergy(nn.Module):
             e = (mag2 * m[None, :, None]).sum(dim=1)
             feats.append(e)
         out = torch.stack(feats, dim=-1).reshape(B, self.n_bands * C)
+        out = self.norm(torch.log1p(out))    # 压尺度 + 标准化，与手工频带处理对齐
         return out[:, None, :].expand(B, T, self.n_bands * C).contiguous()
 
 

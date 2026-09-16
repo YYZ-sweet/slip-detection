@@ -1,12 +1,13 @@
 experiment:
-  name: freq_manual_GRU
+  name: smote_freq_manual_GRU
   tags:
+  - smote
   - freq
   - manual
-  - handcrafted
+  - combined
   - ce
 data:
-  processed_dir: ./processed_data
+  processed_dir: ./processed_data_smote
   freq:
     enabled: true
     mode: manual

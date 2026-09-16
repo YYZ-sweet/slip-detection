@@ -1,28 +1,28 @@
 {
-  "accuracy": 0.9544541192230409,
-  "precision": 0.9586690373718129,
-  "recall": 0.9544541192230409,
-  "f1": 0.9553016568293379,
-  "mcc": 0.889624755052624,
-  "slip_precision": 0.8656036446469249,
+  "accuracy": 0.9457468184862693,
+  "precision": 0.9521036367328817,
+  "recall": 0.9457468184862693,
+  "f1": 0.9469821686127189,
+  "mcc": 0.8709458585481604,
+  "slip_precision": 0.8407079646017699,
   "slip_recall": 0.9768637532133676,
   "fnr": 0.023136246786632397,
   "confusion_matrix": [
     [
-      1045,
-      59
+      1032,
+      72
     ],
     [
       9,
       380
     ]
   ],
-  "run_name": "freq_manual_GRU",
+  "run_name": "smote_freq_manual_GRU",
   "model_type": "GRU",
   "freq_mode": "manual",
-  "threshold": 0.02,
+  "threshold": 0.05,
   "n_params": 66658,
-  "train_time_sec": 41.6,
+  "train_time_sec": 40.55,
   "band_edges_used": [
     0.0,
     5.0,
@@ -31,10 +31,10 @@
     90.0
   ],
   "data_meta": {
-    "n_train": 6970,
+    "n_train": 7689,
     "n_val": 1493,
     "n_test": 1493,
-    "train_slip_ratio": 0.2645624103299857,
+    "train_slip_ratio": 0.3333333333333333,
     "val_slip_ratio": 0.2692565304755526,
     "test_slip_ratio": 0.260549229738781,
     "T": 60,

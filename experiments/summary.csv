@@ -1,0 +1,8 @@
+run_name,model,freq_mode,loss,class_weight,lr,epochs_ran,threshold,acc,f1,mcc,fnr,params,time_sec
+baseline_GRU,GRU,none,ce,False,0.003,27,0.11,0.9297,0.9312,0.83,0.0591,25186,36.4
+freq_learnable_GRU,GRU,learnable,ce,False,0.003,28,0.1,0.933,0.9348,0.8431,0.0308,67093,71.2
+freq_learnable_GRU_nonorm,GRU,learnable,ce,False,0.003,30,0.29,0.8553,0.86,0.6603,0.1542,66661,76.1
+freq_manual_GRU,GRU,manual,ce,False,0.003,21,0.02,0.9545,0.9553,0.8896,0.0231,66658,41.6
+freq_manual_GRU_nonorm,GRU,manual,ce,False,0.003,30,0.21,0.8513,0.8568,0.6593,0.1362,66658,64.5
+smote_GRU,GRU,none,ce,False,0.003,30,0.14,0.9243,0.9264,0.8226,0.0437,25186,51.3
+smote_freq_manual_GRU,GRU,manual,ce,False,0.003,14,0.05,0.9457,0.947,0.8709,0.0231,66658,40.5

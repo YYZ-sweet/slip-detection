@@ -1,0 +1,54 @@
+# configs/smote_freq_manual.yaml
+# SMOTE 过采样 + 手工频带能量 —— 两个改进点的组合
+#
+# 目的：完成 2×2 消融表
+#   ┌──────────────┬──────────┬──────────────┐
+#   │              │ 无频带   │ +手工频带    │
+#   ├──────────────┼──────────┼──────────────┤
+#   │ 无 SMOTE     │ baseline │ freq_manual  │
+#   │ + SMOTE      │ smote    │ 本配置       │
+#   └──────────────┴──────────┴──────────────┘
+#
+# 跑法：
+#   python src/preprocess.py --data_dir ./data_raw --use_smote --output_dir ./processed_data_smote
+#   python src/train.py --config configs/smote_freq_manual.yaml
+
+experiment:
+  name: smote_freq_manual_GRU
+  tags: [smote, freq, manual, combined, ce]
+
+data:
+  processed_dir: ./processed_data_smote
+  freq:
+    enabled: true
+    mode: manual
+    edges_hz: [0.0, 5.0, 15.0, 40.0, 90.0]
+    fs: 180.0
+    band_norm: log_zscore
+
+model:
+  type: GRU
+  input_size: 54
+  hidden_size: 64
+  num_layers: 1
+  bidirectional: false
+  dropout: 0.3
+  num_classes: 2
+
+train:
+  lr: 0.003
+  batch_size: 256
+  epochs: 30
+  early_stop_patience: 7
+  seed: 42
+  device: auto
+  loss: ce
+  class_weight: false
+
+eval:
+  batch_size: 1024
+  tune_threshold: true
+  min_f1_ratio: 0.95
+
+output:
+  results_dir: ./experiments

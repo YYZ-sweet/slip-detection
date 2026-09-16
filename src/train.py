@@ -45,7 +45,8 @@ from sklearn.metrics import (
 # 保证无论从哪里运行，都能 import 到同目录的模块
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from data import load_npz_splits, add_freq_features, TactileWindowDataset
+from data import (load_npz_splits, add_freq_features, fit_band_norm,
+                  apply_band_norm, TactileWindowDataset)
 from freq_modules import FocalLoss, LearnableBandEnergy, tune_threshold, FS
 
 try:
@@ -63,7 +64,8 @@ DEFAULT_CONFIG = {
     "data": {
         "processed_dir": "./processed_data",
         "freq": {"enabled": False, "mode": "none", "n_bands": 4,
-                 "edges_hz": [0.0, 5.0, 15.0, 40.0, 90.0], "fs": FS, "tau": 1.5},
+                 "edges_hz": [0.0, 5.0, 15.0, 40.0, 90.0], "fs": FS, "tau": 1.5,
+                 "band_norm": "log_zscore"},
     },
     "model": {
         "type": "GRU", "input_size": 54, "hidden_size": 64, "num_layers": 1,
@@ -503,16 +505,31 @@ def main():
 
     if f_cfg.get("enabled"):
         if f_cfg.get("mode") == "manual":
+            from freq_modules import compute_band_energy_batch
             edges = f_cfg["edges_hz"]
-            print(f"  手工频带: {edges} Hz")
+            fs = f_cfg.get("fs", FS)
+            band_norm_mode = f_cfg.get("band_norm", "log_zscore")
+            print(f"  手工频带: {edges} Hz，标准化: {band_norm_mode}")
+
+            # 关键：标准化参数只用「训练集」拟合，再套用到 val/test（防泄漏）
+            norm_params = None
+            if band_norm_mode != "none":
+                band_train = compute_band_energy_batch(
+                    X_train, edges=np.array(edges), fs=fs)
+                norm_params = fit_band_norm(band_train, mode=band_norm_mode)
+                print(f"  频带标准化: 拟合自训练集，逐(频带,通道)标准化，"
+                      f"共 {norm_params['mean'].shape[0]} 组参数")
+
             X_train, band_edges_used = add_freq_features(
-                X_train, mode="manual", edges_hz=edges, fs=f_cfg.get("fs", FS))
+                X_train, mode="manual", edges_hz=edges, fs=fs, norm_params=norm_params)
             X_val, _ = add_freq_features(
-                X_val, mode="manual", edges_hz=edges, fs=f_cfg.get("fs", FS))
+                X_val, mode="manual", edges_hz=edges, fs=fs, norm_params=norm_params)
             X_test, _ = add_freq_features(
-                X_test, mode="manual", edges_hz=edges, fs=f_cfg.get("fs", FS))
+                X_test, mode="manual", edges_hz=edges, fs=fs, norm_params=norm_params)
             input_size = X_train.shape[-1]
             print(f"  特征维度: {input_size} ({original_input_size} 时域 + {input_size - original_input_size} 频带)")
+            print(f"  拼接后尺度: 时域 std={X_train[:, :, :original_input_size].std():.3f}, "
+                  f"频带 std={X_train[:, :, original_input_size:].std():.3f}")
 
         elif f_cfg.get("mode") == "learnable":
             n_bands = f_cfg.get("n_bands", 4)

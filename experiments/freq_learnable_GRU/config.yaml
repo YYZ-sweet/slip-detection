@@ -1,15 +1,15 @@
 experiment:
-  name: freq_manual_GRU
+  name: freq_learnable_GRU
   tags:
   - freq
-  - manual
-  - handcrafted
+  - learnable
+  - FTFNet-inspired
   - ce
 data:
   processed_dir: ./processed_data
   freq:
     enabled: true
-    mode: manual
+    mode: learnable
     n_bands: 4
     edges_hz:
     - 0.0

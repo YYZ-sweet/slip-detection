@@ -141,13 +141,50 @@ def build_loaders(config):
     return loaders, meta
 
 
-def add_freq_features(X, mode="manual", **kwargs):
+def fit_band_norm(band, mode="log_zscore", eps=1e-8):
+    """
+    在训练集频带能量上拟合标准化参数（只能在训练集上调用，防止泄漏）。
+
+    为什么需要：频带能量是 |rFFT|^2，量级可达 1e5~1e6，
+    而时域特征 Z-score 后标准差为 1 —— 直接拼接会让 RNN 输入尺度差 1e4 倍，
+    频带特征完全主导、时域信息被淹没。
+
+    参数:
+      band: (N, T, K*C) 原始频带能量
+      mode: "log_zscore"（推荐，能量近似对数正态）/"zscore"/"none"
+
+    返回:
+      norm_params: dict 或 None
+    """
+    if mode == "none":
+        return None
+
+    b = np.log1p(band) if mode == "log_zscore" else band.astype(np.float64)
+    # 按 (频带, 通道) 分别统计：形状 (K*C,)
+    mean = b.mean(axis=(0, 1))
+    std = b.std(axis=(0, 1)) + eps
+    return {"mode": mode,
+            "mean": mean.astype(np.float32),
+            "std": std.astype(np.float32)}
+
+
+def apply_band_norm(band, norm_params, eps=1e-8):
+    """用 fit_band_norm 得到的参数标准化频带能量。"""
+    if norm_params is None:
+        return band
+    mode = norm_params.get("mode", "log_zscore")
+    b = np.log1p(band) if mode == "log_zscore" else band.astype(np.float64)
+    return ((b - norm_params["mean"]) / (norm_params["std"] + eps)).astype(np.float32)
+
+
+def add_freq_features(X, mode="manual", norm_params=None, **kwargs):
     """
     给时域窗口拼接频带能量特征（沿时间维广播）。
 
     输入:
       X: (N, T, C) numpy array
       mode: "manual" 或 "learnable"
+      norm_params: fit_band_norm 的返回值；None 表示不标准化（不推荐）
       kwargs:
         - manual:   edges_hz (list), fs (float)
         - learnable: 见 freq_modules.py 的 LearnableBandEnergy
@@ -161,6 +198,7 @@ def add_freq_features(X, mode="manual", **kwargs):
         edges_hz = kwargs.get("edges_hz", [0.0, 5.0, 15.0, 40.0, 90.0])
         fs = kwargs.get("fs", 180.0)
         band = compute_band_energy_batch(X, edges=np.array(edges_hz), fs=fs)
+        band = apply_band_norm(band, norm_params)
         return np.concatenate([X, band], axis=-1), edges_hz
 
     elif mode == "learnable":

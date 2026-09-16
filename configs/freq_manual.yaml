@@ -20,6 +20,11 @@ data:
     mode: manual
     edges_hz: [0.0, 5.0, 15.0, 40.0, 90.0]   # 4 个频带
     fs: 180.0
+    # 频带能量标准化（关键）：
+    #   原始 |rFFT|^2 量级达 1e5~1e6，而时域特征 std=1，
+    #   不标准化会让频带特征主导网络、性能反而下降。
+    #   log_zscore = log1p 压尺度 + 逐(频带,通道) Z-score，统计量只用训练集拟合。
+    band_norm: log_zscore        # 可选：log_zscore / zscore / none
 
 model:
   type: GRU
