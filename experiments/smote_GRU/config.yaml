@@ -1,0 +1,48 @@
+experiment:
+  name: smote_GRU
+  tags:
+  - smote
+  - no_freq
+  - ce
+data:
+  processed_dir: ./processed_data_smote
+  freq:
+    enabled: false
+    mode: none
+    n_bands: 4
+    edges_hz:
+    - 0.0
+    - 5.0
+    - 15.0
+    - 40.0
+    - 90.0
+    fs: 180.0
+    tau: 1.5
+model:
+  type: GRU
+  input_size: 54
+  hidden_size: 64
+  num_layers: 1
+  bidirectional: false
+  dropout: 0.3
+  num_classes: 2
+  d_model: 64
+  nhead: 4
+  num_encoder_layers: 2
+train:
+  lr: 0.003
+  batch_size: 256
+  epochs: 30
+  early_stop_patience: 7
+  seed: 42
+  device: auto
+  loss: ce
+  focal_gamma: 2.0
+  focal_alpha: 0.75
+  class_weight: false
+eval:
+  batch_size: 1024
+  tune_threshold: true
+  min_f1_ratio: 0.95
+output:
+  results_dir: ./experiments

@@ -1,2 +1,3 @@
 run_name,model,freq_mode,loss,class_weight,lr,epochs_ran,threshold,acc,f1,mcc,fnr,params,time_sec
 baseline_GRU,GRU,none,ce,False,0.003,27,0.11,0.9297,0.9312,0.83,0.0591,25186,36.3
+smote_GRU,GRU,none,ce,False,0.003,30,0.14,0.9243,0.9264,0.8226,0.0437,25186,51.3

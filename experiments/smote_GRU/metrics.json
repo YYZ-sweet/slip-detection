@@ -1,0 +1,37 @@
+{
+  "accuracy": 0.9243134628265238,
+  "precision": 0.9342899426005956,
+  "recall": 0.9243134628265238,
+  "f1": 0.9263976962654779,
+  "mcc": 0.8225550624550512,
+  "slip_precision": 0.7948717948717948,
+  "slip_recall": 0.9562982005141388,
+  "fnr": 0.04370179948586117,
+  "confusion_matrix": [
+    [
+      1008,
+      96
+    ],
+    [
+      17,
+      372
+    ]
+  ],
+  "run_name": "smote_GRU",
+  "model_type": "GRU",
+  "freq_mode": "none",
+  "threshold": 0.13999999999999999,
+  "n_params": 25186,
+  "train_time_sec": 51.26,
+  "band_edges_used": null,
+  "data_meta": {
+    "n_train": 7689,
+    "n_val": 1493,
+    "n_test": 1493,
+    "train_slip_ratio": 0.3333333333333333,
+    "val_slip_ratio": 0.2692565304755526,
+    "test_slip_ratio": 0.260549229738781,
+    "T": 60,
+    "C": 54
+  }
+}
