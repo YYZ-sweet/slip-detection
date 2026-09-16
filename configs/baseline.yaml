@@ -1,29 +1,29 @@
 # configs/baseline.yaml
-# 纯时域 GRU，无 SMOTE，无频带 — 等价于你暑假「入门小任务」的版本
+# 纯时域 GRU，无 SMOTE，无频带 —— 对照组 1
+# 等价于暑假「入门小任务」的版本
+#
+# 跑法：python src/train.py --config configs/baseline.yaml
+# 注意：需要先用无 SMOTE 的预处理数据
+#   python src/preprocess.py --data_dir ./data_raw
 
 experiment:
-  name: baseline_GRU_no_smote
-  tags: [baseline, no_smote, no_freq, GRU]
+  name: baseline_GRU
+  tags: [baseline, no_freq, ce]
 
 data:
   processed_dir: ./processed_data
-  train_npz: train.npz
-  val_npz: val.npz
-  test_npz: test.npz
-  norm_params: norm_params.npz
+  freq:
+    enabled: false
+    mode: none                        # none / manual / learnable
 
 model:
-  type: GRU                  # GRU / LSTM
-  input_size: 54             # 18 pins × 3 axes
+  type: GRU                           # GRU / LSTM / Transformer
+  input_size: 54                      # 18 pins × 3 axes（train.py 会自动按数据修正）
   hidden_size: 64
   num_layers: 1
   bidirectional: false
   dropout: 0.3
   num_classes: 2
-  # 频带特征：baseline 不启用
-  freq:
-    enabled: false
-    mode: null               # manual / learnable
 
 train:
   lr: 0.003
@@ -31,17 +31,14 @@ train:
   epochs: 30
   early_stop_patience: 7
   seed: 42
-  device: auto              # auto / cuda / cpu
-  # 类别不平衡处理：baseline 不启用
-  class_balance:
-    smote: false
-    class_weight: false
-    focal_loss: false
+  device: auto                        # auto / cuda / cpu
+  loss: ce                            # ce / focal
+  class_weight: false
 
 eval:
   batch_size: 1024
-  tune_threshold: true       # 是否在验证集上调阈值
-  min_f1_ratio: 0.95         # 阈值调优时 F1 不能低于最优的多少倍
+  tune_threshold: true
+  min_f1_ratio: 0.95
 
 output:
-  results_dir: ./experiments/${experiment.name}
+  results_dir: ./experiments

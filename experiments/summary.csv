@@ -1,0 +1,2 @@
+run_name,model,freq_mode,loss,class_weight,lr,epochs_ran,threshold,acc,f1,mcc,fnr,params,time_sec
+baseline_GRU,GRU,none,ce,False,0.003,27,0.11,0.9297,0.9312,0.83,0.0591,25186,36.3

@@ -1,17 +1,28 @@
 # configs/freq_learnable.yaml
-# 纯时域 GRU + 可学习频带边界（受 FTFNet 启发，简化实现）
-# 等价于「入门小任务 SMOTE处理/train_ablation.py」的 learnable 实验组
+# 纯时域 GRU + 可学习频带边界 —— 你的核心创新点之二
+#
+# 原理：频带边界不再是手工定的 [0,5,15,40,90]，
+#       而是用 beta 参数经 softmax+cumsum 生成，随训练自动学出来。
+#       约束：softmax 保证每段长度为正，cumsum 保证边界单调递增。
+#
+# 输出物：训练完打印/保存学到的边界（这是论文里最好看的图之一）
+#
+# 跑法：
+#   python src/preprocess.py --data_dir ./data_raw
+#   python src/train.py --config configs/freq_learnable.yaml
 
 experiment:
   name: freq_learnable_GRU
-  tags: [freq, learnable, FTFNet-inspired, GRU]
+  tags: [freq, learnable, FTFNet-inspired, ce]
 
 data:
   processed_dir: ./processed_data
-  train_npz: train.npz
-  val_npz: val.npz
-  test_npz: test.npz
-  norm_params: norm_params.npz
+  freq:
+    enabled: true
+    mode: learnable
+    n_bands: 4
+    fs: 180.0
+    tau: 1.5          # 软边界锐度（Hz），越小越接近硬边界
 
 model:
   type: GRU
@@ -21,13 +32,6 @@ model:
   bidirectional: false
   dropout: 0.3
   num_classes: 2
-  freq:
-    enabled: true
-    mode: learnable         # 边界由 beta 参数训练得到
-    n_bands: 4
-    fs: 180.0
-    tau: 1.5                # 软边界锐度 (Hz)，越小越接近硬边界
-    init: uniform           # 初始化方式：均匀 / 手工边界
 
 train:
   lr: 0.003
@@ -36,10 +40,8 @@ train:
   early_stop_patience: 7
   seed: 42
   device: auto
-  class_balance:
-    smote: false
-    class_weight: false
-    focal_loss: false
+  loss: ce
+  class_weight: false
 
 eval:
   batch_size: 1024
@@ -47,4 +49,4 @@ eval:
   min_f1_ratio: 0.95
 
 output:
-  results_dir: ./experiments/${experiment.name}
+  results_dir: ./experiments

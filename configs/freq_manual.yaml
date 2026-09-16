@@ -1,33 +1,34 @@
 # configs/freq_manual.yaml
-# 纯时域 GRU + 手工固定频带能量（0-5/5-15/15-40/40-90 Hz）
-# 等价于「入门小任务加频带/YuanBao」原版
+# 纯时域 GRU + 手工固定频带能量 —— 你的核心创新点之一
+#
+# 原理：对 60 帧窗口做 rFFT，按 [0,5,15,40,90] Hz 切 4 个频带，
+#       每个频带对 54 个通道各算一个能量，沿时间维广播后拼到原特征后面。
+#       特征维度 54 → 54 + 4×54 = 270。
+#
+# 跑法：
+#   python src/preprocess.py --data_dir ./data_raw            # 无 SMOTE 版
+#   python src/train.py --config configs/freq_manual.yaml
 
 experiment:
   name: freq_manual_GRU
-  tags: [freq, manual, GRU]
+  tags: [freq, manual, handcrafted, ce]
 
 data:
   processed_dir: ./processed_data
-  train_npz: train.npz
-  val_npz: val.npz
-  test_npz: test.npz
-  norm_params: norm_params.npz
+  freq:
+    enabled: true
+    mode: manual
+    edges_hz: [0.0, 5.0, 15.0, 40.0, 90.0]   # 4 个频带
+    fs: 180.0
 
 model:
   type: GRU
-  input_size: 54
+  input_size: 54                    # 会被 train.py 自动改成 270
   hidden_size: 64
   num_layers: 1
   bidirectional: false
   dropout: 0.3
   num_classes: 2
-  freq:
-    enabled: true
-    mode: manual            # 手工固定边界
-    n_bands: 4
-    edges_hz: [0.0, 5.0, 15.0, 40.0, 90.0]   # 4 频带
-    fs: 180.0
-    # 手工频带能量计算 + Z-score 后拼接到时域 → 输入维度变成 54 + 4*54 = 270
 
 train:
   lr: 0.003
@@ -36,10 +37,8 @@ train:
   early_stop_patience: 7
   seed: 42
   device: auto
-  class_balance:
-    smote: false
-    class_weight: false
-    focal_loss: false
+  loss: ce
+  class_weight: false
 
 eval:
   batch_size: 1024
@@ -47,4 +46,4 @@ eval:
   min_f1_ratio: 0.95
 
 output:
-  results_dir: ./experiments/${experiment.name}
+  results_dir: ./experiments

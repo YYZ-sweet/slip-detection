@@ -1,19 +1,21 @@
-# 原始数据（h5 文件，200+MB，不入 git）
-data/*.h5
-data/Original/
+# ===== 数据（大文件，绝对不入 git）=====
+data/
+data_raw/
+*.h5
+*.npz
 
-# 预处理产物（npz，跑 preprocess.py 重新生成）
-processed_data/*.npz
-processed_data/__pycache__/
-
-# 模型 checkpoint 和训练日志
+# ===== 预处理产物（跑 preprocess.py 重新生成）=====
+processed_data/
 outputs/
 outputs_ablation/
 output_SF/
 output_ST/
 output_ablation/
 
-# Python
+# ===== 实验结果里的模型权重（太大，不入 git）=====
+experiments/**/best.pt
+
+# ===== Python =====
 __pycache__/
 *.pyc
 *.pyo
@@ -22,24 +24,24 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 
-# 虚拟环境
+# ===== 虚拟环境 =====
 venv/
 env/
 .venv/
 .env/
 
-# IDE
+# ===== IDE =====
 .idea/
 .vscode/
 *.swp
 *.swo
 
-# 系统
+# ===== 系统 =====
 .DS_Store
 Thumbs.db
 
-# 临时文件
+# ===== 临时文件 =====
 *.tmp
 *.bak
 *.log
-.ipynb_checkpoints/
+.ipython_checkpoints/

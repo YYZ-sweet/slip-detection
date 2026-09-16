@@ -1,16 +1,25 @@
 # configs/smote.yaml
-# 纯时域 GRU + 训练集 SMOTE — 等价于「入门小任务 SMOTE处理」
+# 纯时域 GRU + 训练集 SMOTE —— 对照组 2
+#
+# SMOTE 在【预处理阶段】完成（只对训练集），所以：
+#   1. 先用 SMOTE 重新生成数据：
+#        python src/preprocess.py --data_dir ./data_raw --use_smote --output_dir ./processed_data_smote
+#   2. 再训练：
+#        python src/train.py --config configs/smote.yaml
+#
+# 为什么 SMOTE 不放在训练循环里？
+#   放在预处理阶段 = 数据固定、可复现、易对比；
+#   放在训练里 = 每个 epoch 重新合成，反而难以复现。
 
 experiment:
-  name: baseline_GRU_smote
-  tags: [smote, no_freq, GRU]
+  name: smote_GRU
+  tags: [smote, no_freq, ce]
 
 data:
-  processed_dir: ./processed_data
-  train_npz: train.npz
-  val_npz: val.npz
-  test_npz: test.npz
-  norm_params: norm_params.npz
+  processed_dir: ./processed_data_smote     # 指向 SMOTE 版数据
+  freq:
+    enabled: false
+    mode: none
 
 model:
   type: GRU
@@ -20,8 +29,6 @@ model:
   bidirectional: false
   dropout: 0.3
   num_classes: 2
-  freq:
-    enabled: false
 
 train:
   lr: 0.003
@@ -30,10 +37,8 @@ train:
   early_stop_patience: 7
   seed: 42
   device: auto
-  class_balance:
-    smote: false             # 这里关闭，SMOTE 已在 preprocess 阶段做完
-    class_weight: false
-    focal_loss: false
+  loss: ce
+  class_weight: false
 
 eval:
   batch_size: 1024
@@ -41,9 +46,4 @@ eval:
   min_f1_ratio: 0.95
 
 output:
-  results_dir: ./experiments/${experiment.name}
-
-# 注意：本实验需要先跑：
-#   python src/preprocess.py --use_smote
-# 再跑：
-#   python src/train.py --config configs/smote.yaml
+  results_dir: ./experiments

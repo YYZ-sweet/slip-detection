@@ -9,26 +9,35 @@
 ## 1. 一键复现
 
 ```bash
-# 装环境
-conda create -n tactile python=3.10
-conda activate tactile
+# 装环境（Windows 直接把 python 的包装齐即可）
 pip install -r requirements.txt
 
-# 1. 把数据放到 data/ 下（h5 文件，不入 git）
-#    data/slipDataset_brush_tactile.h5
-#    data/slipDataset_screwDriver_tactile.h5
-#    data/slipDataset_SpoolSolder_tactile.h5
+# 1. 把原始数据链接过来（h5 文件，不入 git）
+#    原始数据在 C:\Users\30352\Desktop\Database\slip_detection_dataset_2021\data\
+ln -s "/c/Users/30352/Desktop/Database/slip_detection_dataset_2021/data" data_raw
 
 # 2. 预处理（默认 baseline：不启用 SMOTE）
-python src/preprocess.py
-# 或：启用 SMOTE
-python src/preprocess.py --use_smote
+python src/preprocess.py --data_dir ./data_raw
 
-# 3. 训练 baseline
+# 2b. 需要 SMOTE 版数据时，换一个输出目录，别覆盖
+python src/preprocess.py --data_dir ./data_raw --use_smote --output_dir ./processed_data_smote
+
+# 3. 训练（自动落盘到 experiments/<实验名>/）
 python src/train.py --config configs/baseline.yaml
 
-# 4. 训练 + 频带
-python src/train.py --config configs/freq_manual.yaml
+# 4. 单独评估（复现论文里的数字用）
+python src/eval.py --run experiments/baseline_GRU
+
+# 5. 看所有实验的横向对比
+cat experiments/summary.csv
+```
+
+**命令行快速实验**（不写 yaml 也能跑）：
+
+```bash
+python src/train.py --name quick_gru --model GRU --freq_mode none --epochs 20
+python src/train.py --name quick_manual --model GRU --freq_mode manual
+python src/train.py --name quick_learn --model LSTM --freq_mode learnable --lr 0.001
 ```
 
 ---
@@ -76,12 +85,14 @@ slip-detection/
 
 ### 第一阶段：工程化地基（W1-W2）
 
-- [ ] GitHub 仓库建好，第一次推送
-- [ ] `preprocess.py` 支持命令行参数（已改造）
-- [ ] `train.py` 支持 yaml 配置
-- [ ] WSL2 Ubuntu 下能跑通
-- [ ] `requirements.txt` 固化
-- [ ] 写好总 README（就是本文件）
+- [x] GitHub 仓库建好，第一次推送
+- [x] `preprocess.py` 支持命令行参数（argparse 改造完成）
+- [x] `train.py` 支持 yaml 配置 + 命令行覆盖（支持 GRU/LSTM/Transformer）
+- [x] `eval.py` 独立评估脚本
+- [x] `requirements.txt` 固化
+- [x] 写好总 README（就是本文件）
+- [ ] 跑通全部 4 组实验，填满 `experiments/summary.csv`
+- [ ] WSL2 Ubuntu 下能跑通（可选，研二需要时再装）
 
 ### 第二阶段：精读四剑客（W3-W4）
 
