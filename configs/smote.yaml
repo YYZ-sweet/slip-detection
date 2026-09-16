@@ -1,0 +1,49 @@
+# configs/smote.yaml
+# 纯时域 GRU + 训练集 SMOTE — 等价于「入门小任务 SMOTE处理」
+
+experiment:
+  name: baseline_GRU_smote
+  tags: [smote, no_freq, GRU]
+
+data:
+  processed_dir: ./processed_data
+  train_npz: train.npz
+  val_npz: val.npz
+  test_npz: test.npz
+  norm_params: norm_params.npz
+
+model:
+  type: GRU
+  input_size: 54
+  hidden_size: 64
+  num_layers: 1
+  bidirectional: false
+  dropout: 0.3
+  num_classes: 2
+  freq:
+    enabled: false
+
+train:
+  lr: 0.003
+  batch_size: 256
+  epochs: 30
+  early_stop_patience: 7
+  seed: 42
+  device: auto
+  class_balance:
+    smote: false             # 这里关闭，SMOTE 已在 preprocess 阶段做完
+    class_weight: false
+    focal_loss: false
+
+eval:
+  batch_size: 1024
+  tune_threshold: true
+  min_f1_ratio: 0.95
+
+output:
+  results_dir: ./experiments/${experiment.name}
+
+# 注意：本实验需要先跑：
+#   python src/preprocess.py --use_smote
+# 再跑：
+#   python src/train.py --config configs/smote.yaml

@@ -1,0 +1,50 @@
+# configs/freq_learnable.yaml
+# 纯时域 GRU + 可学习频带边界（受 FTFNet 启发，简化实现）
+# 等价于「入门小任务 SMOTE处理/train_ablation.py」的 learnable 实验组
+
+experiment:
+  name: freq_learnable_GRU
+  tags: [freq, learnable, FTFNet-inspired, GRU]
+
+data:
+  processed_dir: ./processed_data
+  train_npz: train.npz
+  val_npz: val.npz
+  test_npz: test.npz
+  norm_params: norm_params.npz
+
+model:
+  type: GRU
+  input_size: 54
+  hidden_size: 64
+  num_layers: 1
+  bidirectional: false
+  dropout: 0.3
+  num_classes: 2
+  freq:
+    enabled: true
+    mode: learnable         # 边界由 beta 参数训练得到
+    n_bands: 4
+    fs: 180.0
+    tau: 1.5                # 软边界锐度 (Hz)，越小越接近硬边界
+    init: uniform           # 初始化方式：均匀 / 手工边界
+
+train:
+  lr: 0.003
+  batch_size: 256
+  epochs: 30
+  early_stop_patience: 7
+  seed: 42
+  device: auto
+  class_balance:
+    smote: false
+    class_weight: false
+    focal_loss: false
+
+eval:
+  batch_size: 1024
+  tune_threshold: true
+  min_f1_ratio: 0.95
+
+output:
+  results_dir: ./experiments/${experiment.name}

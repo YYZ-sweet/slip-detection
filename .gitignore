@@ -1,0 +1,45 @@
+# 原始数据（h5 文件，200+MB，不入 git）
+data/*.h5
+data/Original/
+
+# 预处理产物（npz，跑 preprocess.py 重新生成）
+processed_data/*.npz
+processed_data/__pycache__/
+
+# 模型 checkpoint 和训练日志
+outputs/
+outputs_ablation/
+output_SF/
+output_ST/
+output_ablation/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.pytest_cache/
+
+# 虚拟环境
+venv/
+env/
+.venv/
+.env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.bak
+*.log
+.ipynb_checkpoints/

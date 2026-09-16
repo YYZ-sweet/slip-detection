@@ -1,0 +1,50 @@
+# configs/freq_manual.yaml
+# 纯时域 GRU + 手工固定频带能量（0-5/5-15/15-40/40-90 Hz）
+# 等价于「入门小任务加频带/YuanBao」原版
+
+experiment:
+  name: freq_manual_GRU
+  tags: [freq, manual, GRU]
+
+data:
+  processed_dir: ./processed_data
+  train_npz: train.npz
+  val_npz: val.npz
+  test_npz: test.npz
+  norm_params: norm_params.npz
+
+model:
+  type: GRU
+  input_size: 54
+  hidden_size: 64
+  num_layers: 1
+  bidirectional: false
+  dropout: 0.3
+  num_classes: 2
+  freq:
+    enabled: true
+    mode: manual            # 手工固定边界
+    n_bands: 4
+    edges_hz: [0.0, 5.0, 15.0, 40.0, 90.0]   # 4 频带
+    fs: 180.0
+    # 手工频带能量计算 + Z-score 后拼接到时域 → 输入维度变成 54 + 4*54 = 270
+
+train:
+  lr: 0.003
+  batch_size: 256
+  epochs: 30
+  early_stop_patience: 7
+  seed: 42
+  device: auto
+  class_balance:
+    smote: false
+    class_weight: false
+    focal_loss: false
+
+eval:
+  batch_size: 1024
+  tune_threshold: true
+  min_f1_ratio: 0.95
+
+output:
+  results_dir: ./experiments/${experiment.name}
