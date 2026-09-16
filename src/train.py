@@ -235,17 +235,23 @@ class TransformerClassifier(nn.Module):
         return self.head(h)
 
 
-def build_model(cfg, input_size):
-    """根据配置构建模型；返回 (model, input_size_after_freq)。"""
+def build_model(cfg, input_size, original_input_size=None):
+    """根据配置构建模型。
+
+    Args:
+        input_size: 模型实际接收的输入维度（含频带扩展）。
+        original_input_size: 原始时域特征维度（54），可学习频带模块内部用。
+    """
     m_cfg = cfg["model"]
     f_cfg = cfg["data"]["freq"]
     model_type = m_cfg["type"]
+    original_input_size = original_input_size or input_size
 
     freq_module = None
     if f_cfg.get("enabled") and f_cfg.get("mode") == "learnable":
         freq_module = LearnableBandEnergy(
             n_bands=f_cfg["n_bands"],
-            n_ch=input_size,
+            n_ch=original_input_size,
             fs=f_cfg.get("fs", FS),
             tau=f_cfg.get("tau", 1.5),
         )
@@ -489,22 +495,30 @@ def main():
           f" | Slip%: {meta['train_slip_ratio']:.1%}/{meta['val_slip_ratio']:.1%}/"
           f"{meta['test_slip_ratio']:.1%}")
 
-    # ---------- 手工频带特征（在归一化之后拼接）----------
+    # ---------- 频带特征（决定模型真实输入维度）----------
     f_cfg = cfg["data"]["freq"]
-    input_size = X_train.shape[-1]
+    original_input_size = X_train.shape[-1]
+    input_size = original_input_size
     band_edges_used = None
 
-    if f_cfg.get("enabled") and f_cfg.get("mode") == "manual":
-        edges = f_cfg["edges_hz"]
-        print(f"  手工频带: {edges} Hz")
-        X_train, band_edges_used = add_freq_features(
-            X_train, mode="manual", edges_hz=edges, fs=f_cfg.get("fs", FS))
-        X_val, _ = add_freq_features(
-            X_val, mode="manual", edges_hz=edges, fs=f_cfg.get("fs", FS))
-        X_test, _ = add_freq_features(
-            X_test, mode="manual", edges_hz=edges, fs=f_cfg.get("fs", FS))
-        input_size = X_train.shape[-1]
-        print(f"  特征维度: {X_train.shape[-1]} (54 时域 + {X_train.shape[-1]-54} 频带)")
+    if f_cfg.get("enabled"):
+        if f_cfg.get("mode") == "manual":
+            edges = f_cfg["edges_hz"]
+            print(f"  手工频带: {edges} Hz")
+            X_train, band_edges_used = add_freq_features(
+                X_train, mode="manual", edges_hz=edges, fs=f_cfg.get("fs", FS))
+            X_val, _ = add_freq_features(
+                X_val, mode="manual", edges_hz=edges, fs=f_cfg.get("fs", FS))
+            X_test, _ = add_freq_features(
+                X_test, mode="manual", edges_hz=edges, fs=f_cfg.get("fs", FS))
+            input_size = X_train.shape[-1]
+            print(f"  特征维度: {input_size} ({original_input_size} 时域 + {input_size - original_input_size} 频带)")
+
+        elif f_cfg.get("mode") == "learnable":
+            n_bands = f_cfg.get("n_bands", 4)
+            input_size = original_input_size + n_bands * original_input_size
+            print(f"  可学习频带: {n_bands} bands, 输入维度将扩展为 {input_size} "
+                  f"({original_input_size} 时域 + {n_bands * original_input_size} 频带)")
 
     # ---------- DataLoader ----------
     from torch.utils.data import DataLoader
@@ -521,7 +535,7 @@ def main():
 
     # ---------- 模型 ----------
     set_seed(cfg["train"]["seed"])
-    model = build_model(cfg, input_size).to(device)
+    model = build_model(cfg, input_size, original_input_size).to(device)
     n_params = sum(p.numel() for p in model.parameters())
     n_trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"\n  参数量: {n_params:,} (可训练 {n_trainable:,})")
